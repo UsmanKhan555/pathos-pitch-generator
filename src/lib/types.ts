@@ -7,6 +7,7 @@ export interface PitchInput {
   journalistName?: string;
   publication?: string;
   tone?: Tone;
+  senderName?: string;
 }
 
 export interface PitchOutput {

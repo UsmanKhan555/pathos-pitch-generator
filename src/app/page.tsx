@@ -10,6 +10,7 @@ const initialInput: PitchInput = {
   journalistName: "",
   publication: "",
   tone: undefined,
+  senderName: "",
 };
 
 export default function Home() {
@@ -135,22 +136,34 @@ export default function Home() {
             </Field>
           </div>
 
-          <Field label="Tone (optional)">
-            <select
-              value={input.tone ?? ""}
-              onChange={(e) =>
-                update(
-                  "tone",
-                  e.target.value === "" ? undefined : (e.target.value as Tone),
-                )
-              }
-              className={inputClass}
-            >
-              <option value="">Default</option>
-              <option value="formal">Formal</option>
-              <option value="conversational">Conversational</option>
-            </select>
-          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Your name (optional)">
+              <input
+                type="text"
+                value={input.senderName}
+                onChange={(e) => update("senderName", e.target.value)}
+                placeholder="Alex Rivera"
+                className={inputClass}
+              />
+            </Field>
+
+            <Field label="Tone (optional)">
+              <select
+                value={input.tone ?? ""}
+                onChange={(e) =>
+                  update(
+                    "tone",
+                    e.target.value === "" ? undefined : (e.target.value as Tone),
+                  )
+                }
+                className={inputClass}
+              >
+                <option value="">Default</option>
+                <option value="formal">Formal</option>
+                <option value="conversational">Conversational</option>
+              </select>
+            </Field>
+          </div>
 
           <button
             type="submit"

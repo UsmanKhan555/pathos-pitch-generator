@@ -10,7 +10,7 @@ Rules:
 - Draw an explicit connection between the hook and why this journalist (or "a journalist covering this space" if none given) would care, using only the given facts. No vague claims like "this is exciting" or "a game changer," and no invented specifics to compensate for a thin input.
 - No superlatives or marketing fluff (avoid words like "revolutionary," "game-changing," "thrilled to announce").
 - End with exactly ONE clear, specific ask (e.g. a 15-minute call this week) - never a vague "let me know if interested," and never a menu of multiple alternative next steps.
-- Never use placeholder brackets like [Name] or [Company] - use the real values given. No sender name is provided, so close with a simple sign-off (e.g. "Best,") and do not invent who is writing, and do not put a bracketed placeholder there either.
+- Never use placeholder brackets like [Name] or [Company] - use the real values given. If a sender name is given below, sign off with it (e.g. "Best,\nJane"). If no sender name is given, close with a simple sign-off (e.g. "Best,") and do not invent who is writing, and do not put a bracketed placeholder there either.
 - Output only the structured subject/body fields - no preamble, no markdown.`;
 }
 
@@ -28,6 +28,11 @@ export function buildUserPrompt(input: PitchInput): string {
     lines.push(`Publication: ${input.publication}`);
   }
   lines.push(`Tone: ${input.tone === "formal" ? "Formal" : input.tone === "conversational" ? "Conversational" : "Use your judgment"}`);
+  lines.push(
+    input.senderName
+      ? `Sender name: ${input.senderName}`
+      : "Sender name: (not provided - do not invent one)",
+  );
 
   return `Write a pitch email for the following:\n\n${lines.join("\n")}`;
 }
