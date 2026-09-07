@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pitch Email Generator
 
-## Getting Started
+A small tool that drafts a first-pass PR pitch email from a client, a description of what
+they do, and a news hook — the kind of thing a PR consultant would then review and edit
+before sending to a journalist. See [PRD.md](./PRD.md) for the full spec.
 
-First, run the development server:
+## What it does
+
+1. Fill in a client/company name, a one-line description, and a news hook (required).
+   Optionally add a target journalist's name, their publication, and a tone.
+2. Click **Generate Pitch** — this calls Claude (via a Next.js route handler) with a
+   system prompt tuned for concise, non-generic PR pitches, and gets back structured
+   `{subject, body}` JSON.
+3. The draft is checked automatically for word count, leaked placeholder text (e.g.
+   `[Journalist Name]`), an empty subject line, and refusal/apology language. Any issues
+   show up as a warning banner — a signal to look closer, not a hard block.
+4. Edit the subject/body inline, **Regenerate** with the same inputs, **Copy to
+   clipboard**, or **Send** (mocked — no email is actually delivered).
+
+## Running locally
 
 ```bash
+npm install
+cp .env.example .env.local   # then paste in your own ANTHROPIC_API_KEY
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). You'll need an Anthropic API key
+(console.anthropic.com) with access to `claude-sonnet-5`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Next.js (App Router) + TypeScript + Tailwind CSS, with a route handler
+(`src/app/api/generate-pitch`) calling the Anthropic API server-side. No database, no
+auth, no real email sending — see [PRD.md](./PRD.md) for the full scope and what's
+explicitly out of it.
 
-## Learn More
+## What I'd do next
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Fabrication is the main remaining risk.** The prompt now explicitly forbids
+  inventing facts not in the input (an earlier draft was fabricating statistics and
+  program details for vague inputs — see the `fix: tighten pitch prompt based on manual
+  review` commit), but this is a soft instruction, not a guarantee. A stronger next step
+  would be a second automated pass that checks the draft only references entities/nouns
+  present in the input, or a lower-stakes model-graded check.
+- **Output quality tracks input specificity.** A vague hook still produces a
+  correspondingly vague (if honest) pitch. A "hook strength" hint in the UI, or a
+  follow-up question flow to extract more specifics before generating, would help.
+- **No journalist database/lookup** — deliberately out of scope for this exercise, but a
+  real version would benefit from matching tone/style to the specific outlet.
+- **No history view** — regenerating loses the previous draft. A localStorage-backed
+  list of past generations was scoped as a stretch goal and would be a natural next
+  addition.
