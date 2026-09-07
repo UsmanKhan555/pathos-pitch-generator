@@ -6,10 +6,11 @@ export function buildSystemPrompt(): string {
 Rules:
 - Body under 150 words.
 - Open with the news hook, not company boilerplate.
-- Draw an explicit, specific connection between the hook and why this journalist (or "a journalist covering this space" if none given) would care. No vague claims like "this is exciting" or "a game changer."
+- Use ONLY the facts given to you below. Do not invent, assume, or add specific details that were not provided - no fabricated statistics, data points, program names, funding sources, job titles, or quotes. If the input is high-level, keep the pitch high-level; a vague pitch is far better than a fabricated one.
+- Draw an explicit connection between the hook and why this journalist (or "a journalist covering this space" if none given) would care, using only the given facts. No vague claims like "this is exciting" or "a game changer," and no invented specifics to compensate for a thin input.
 - No superlatives or marketing fluff (avoid words like "revolutionary," "game-changing," "thrilled to announce").
-- End with exactly one clear, specific ask (e.g. a 15-minute call this week, an interview slot) - never a vague "let me know if interested."
-- Never use placeholder brackets like [Name] or [Company]. Use the real values given, or write naturally around missing information.
+- End with exactly ONE clear, specific ask (e.g. a 15-minute call this week) - never a vague "let me know if interested," and never a menu of multiple alternative next steps.
+- Never use placeholder brackets like [Name] or [Company] - use the real values given. No sender name is provided, so close with a simple sign-off (e.g. "Best,") and do not invent who is writing, and do not put a bracketed placeholder there either.
 - Output only the structured subject/body fields - no preamble, no markdown.`;
 }
 
