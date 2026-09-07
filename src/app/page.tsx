@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { PitchInput, Tone } from "@/lib/types";
+import type { GeneratePitchResponse, PitchInput, PitchOutput, Tone } from "@/lib/types";
 
 const initialInput: PitchInput = {
   clientName: "",
@@ -15,18 +15,39 @@ const initialInput: PitchInput = {
 export default function Home() {
   const [input, setInput] = useState<PitchInput>(initialInput);
   const [submitting, setSubmitting] = useState(false);
+  const [pitch, setPitch] = useState<PitchOutput | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   function update<K extends keyof PitchInput>(key: K, value: PitchInput[K]) {
     setInput((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    // Generation wiring lands in a later commit — for now this just proves
-    // out the form's local state.
-    console.log("Pitch request", input);
-    setSubmitting(false);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/generate-pitch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Request failed (${res.status})`);
+      }
+
+      const data = (await res.json()) as GeneratePitchResponse;
+      setPitch(data.pitch);
+      setWarnings(data.warnings);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const canSubmit =
@@ -124,6 +145,47 @@ export default function Home() {
             {submitting ? "Generating..." : "Generate Pitch"}
           </button>
         </form>
+
+        {error && (
+          <p className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+            {error}
+          </p>
+        )}
+
+        {warnings.length > 0 && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+            <p className="font-medium">Worth a second look:</p>
+            <ul className="mt-1 list-inside list-disc">
+              {warnings.map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {pitch && (
+          <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              Draft pitch (edit as needed)
+            </h2>
+            <Field label="Subject">
+              <input
+                type="text"
+                value={pitch.subject}
+                onChange={(e) => setPitch({ ...pitch, subject: e.target.value })}
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Body">
+              <textarea
+                value={pitch.body}
+                onChange={(e) => setPitch({ ...pitch, body: e.target.value })}
+                rows={10}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+        )}
       </main>
     </div>
   );
