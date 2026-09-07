@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { generatePitch } from "@/lib/anthropic";
 import type { GeneratePitchResponse, PitchInput } from "@/lib/types";
 
 export async function POST(request: Request) {
@@ -11,14 +12,20 @@ export async function POST(request: Request) {
     );
   }
 
-  // Hardcoded response for now - real Anthropic call lands in a later commit.
-  const response: GeneratePitchResponse = {
-    pitch: {
-      subject: `${input.clientName} + your beat: a quick one`,
-      body: `Hi${input.journalistName ? ` ${input.journalistName}` : ""},\n\n${input.clientName} (${input.description}) just had news: ${input.hook}. Thought it might be relevant to what you cover${input.publication ? ` at ${input.publication}` : ""}.\n\nWould you be open to a 15-minute call this week to hear more?\n\nBest,\n[Your name]`,
-    },
-    warnings: [],
-  };
+  try {
+    const pitch = await generatePitch(input);
 
-  return NextResponse.json(response);
+    const response: GeneratePitchResponse = {
+      pitch,
+      warnings: [],
+    };
+
+    return NextResponse.json(response);
+  } catch (err) {
+    console.error("Pitch generation failed", err);
+    return NextResponse.json(
+      { error: "Failed to generate pitch" },
+      { status: 502 },
+    );
+  }
 }
