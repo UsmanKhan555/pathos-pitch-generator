@@ -18,15 +18,18 @@ export default function Home() {
   const [pitch, setPitch] = useState<PitchOutput | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [sent, setSent] = useState(false);
 
   function update<K extends keyof PitchInput>(key: K, value: PitchInput[K]) {
     setInput((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function generate() {
     setSubmitting(true);
     setError(null);
+    setCopied(false);
+    setSent(false);
 
     try {
       const res = await fetch("/api/generate-pitch", {
@@ -48,6 +51,18 @@ export default function Home() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    void generate();
+  }
+
+  async function handleCopy() {
+    if (!pitch) return;
+    await navigator.clipboard.writeText(`Subject: ${pitch.subject}\n\n${pitch.body}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   const canSubmit =
@@ -184,6 +199,37 @@ export default function Home() {
                 className={inputClass}
               />
             </Field>
+
+            <div className="flex flex-wrap gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => void generate()}
+                disabled={submitting}
+                className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                {submitting ? "Regenerating..." : "Regenerate"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleCopy()}
+                className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                {copied ? "Copied!" : "Copy to clipboard"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSent(true)}
+                disabled={sent}
+                className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              >
+                {sent ? "Sent" : "Send"}
+              </button>
+            </div>
+            {sent && (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                This is a mock send - no email was actually delivered.
+              </p>
+            )}
           </div>
         )}
       </main>
