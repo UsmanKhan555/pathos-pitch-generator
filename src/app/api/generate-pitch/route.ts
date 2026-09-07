@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generatePitch } from "@/lib/anthropic";
+import { validatePitch } from "@/lib/validation";
 import type { GeneratePitchResponse, PitchInput } from "@/lib/types";
 
 export async function POST(request: Request) {
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
 
     const response: GeneratePitchResponse = {
       pitch,
-      warnings: [],
+      warnings: validatePitch(pitch),
     };
 
     return NextResponse.json(response);
