@@ -1,7 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import type { GeneratePitchResponse, PitchInput, PitchOutput, Tone } from "@/lib/types";
+import { useState, useSyncExternalStore } from "react";
+import {
+  clearHistory,
+  getHistorySnapshot,
+  getHistoryServerSnapshot,
+  saveHistoryEntry,
+  subscribeToHistory,
+} from "@/lib/history";
+import type {
+  GeneratePitchResponse,
+  HistoryEntry,
+  PitchInput,
+  PitchOutput,
+  Tone,
+} from "@/lib/types";
 
 const initialInput: PitchInput = {
   clientName: "",
@@ -21,6 +34,11 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [sent, setSent] = useState(false);
+  const history = useSyncExternalStore(
+    subscribeToHistory,
+    getHistorySnapshot,
+    getHistoryServerSnapshot,
+  );
 
   function update<K extends keyof PitchInput>(key: K, value: PitchInput[K]) {
     setInput((prev) => ({ ...prev, [key]: value }));
@@ -47,6 +65,15 @@ export default function Home() {
       const data = (await res.json()) as GeneratePitchResponse;
       setPitch(data.pitch);
       setWarnings(data.warnings);
+
+      const entry: HistoryEntry = {
+        id: crypto.randomUUID(),
+        createdAt: Date.now(),
+        input,
+        pitch: data.pitch,
+        warnings: data.warnings,
+      };
+      saveHistoryEntry(entry, history);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -64,6 +91,19 @@ export default function Home() {
     await navigator.clipboard.writeText(`Subject: ${pitch.subject}\n\n${pitch.body}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleLoadHistoryEntry(entry: HistoryEntry) {
+    setInput(entry.input);
+    setPitch(entry.pitch);
+    setWarnings(entry.warnings);
+    setError(null);
+    setCopied(false);
+    setSent(false);
+  }
+
+  function handleClearHistory() {
+    clearHistory();
   }
 
   const canSubmit =
@@ -244,6 +284,44 @@ export default function Home() {
               </p>
             )}
           </div>
+        )}
+
+        {history.length > 0 && (
+          <details className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <summary className="cursor-pointer text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              History ({history.length})
+            </summary>
+
+            <div className="mt-4 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={handleClearHistory}
+                className="self-start rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                Clear history
+              </button>
+
+              <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
+                {history.map((entry) => (
+                  <li key={entry.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleLoadHistoryEntry(entry)}
+                      className="flex w-full flex-col gap-0.5 py-3 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                    >
+                      <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                        {entry.pitch.subject || "(no subject)"}
+                      </span>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                        {entry.input.clientName} &middot;{" "}
+                        {new Date(entry.createdAt).toLocaleString()}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
         )}
       </main>
     </div>

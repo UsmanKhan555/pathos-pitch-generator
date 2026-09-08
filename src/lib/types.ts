@@ -19,3 +19,11 @@ export interface GeneratePitchResponse {
   pitch: PitchOutput;
   warnings: string[];
 }
+
+export interface HistoryEntry {
+  id: string;
+  createdAt: number;
+  input: PitchInput;
+  pitch: PitchOutput;
+  warnings: string[];
+}
